@@ -29,7 +29,7 @@ Roast generation is CLI-only. The server no longer calls an LLM provider; the co
 
 ## Tone
 
-Every roast has two modes. The default, Full Filth, is deliberately obscene: at least one real swear per paragraph, no asterisks, no euphemisms, and a verdict with teeth. Clean Mode keeps the same 12-paragraph structure and the same brutality without a single curse word. Both modes ban slurs, sexual content, threats, and attacks on protected characteristics, because being vile about code is the point and being vile about people is not.
+Every roast has two modes. The default, Full Filth, is deliberately obscene: at least one real swear per paragraph, no asterisks, no euphemisms, and a verdict with teeth. Clean Mode keeps the same 12-paragraph structure and the same brutality without a single curse word. Both modes ban slurs, sexual content, threats, attacks on protected characteristics, and taking the Lord's name in vain, because being vile about code is the point and being vile about people or faith is not.
 
 ## Tech Stack
 

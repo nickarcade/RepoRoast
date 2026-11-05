@@ -35,11 +35,12 @@ export const roastPrompt = (profanity) => {
     ? `
 PROFANITY RULES:
 - Every paragraph must contain at least one real swear word.
-- Attach the profanity to evidence: the shitty file, the goddamn dependency, the clusterfuck commit, the bullshit claim.
-- Vary the vocabulary: fuck, fucking, motherfucker, shit, shitty, bullshit, asshole, bastard, dickhead, clusterfuck, piss, pissed, crap, hell, goddamn.
+- Attach the profanity to evidence: the shitty file, the fucking dependency, the clusterfuck commit, the bullshit claim.
+- Vary the vocabulary: fuck, fucking, motherfucker, shit, shitty, bullshit, asshole, bastard, dickhead, clusterfuck, piss, pissed, crap, hell.
 - The last two paragraphs must be the filthiest and most specific.
 - Never censor with asterisks, dashes, or substitutes: no f*, no f---, no freaking, no effing.
-- No slurs, no sexual content, no threats, no attacks on protected characteristics. Obscenity, not bigotry.
+- Do not take the Lord's name in vain: never use God, goddamn, God damn, Lord, Good Lord, Good God, godforsaken, Jesus, Christ, Jesus Christ, or any religious profanity.
+- No slurs, no sexual content, no threats, no attacks on protected characteristics. Obscenity, not bigotry or blasphemy.
 `
     : "";
 

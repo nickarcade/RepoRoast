@@ -21,7 +21,7 @@ const CLEAN_TAGLINES = [
 
 const PROFANE_TAGLINES = [
   "Reading your shitty commit history...",
-  "Judging your goddamn variable names...",
+  "Judging your garbage variable names...",
   "Counting the fucks you gave about tests...",
   "Scanning for the shit you copy-pasted...",
   "Measuring the depth of your bullshit...",
