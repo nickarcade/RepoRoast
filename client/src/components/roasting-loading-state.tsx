@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Skull } from "lucide-react"
 
-const LOADING_TAGLINES = [
+const CLEAN_TAGLINES = [
   "Destroying your repo...",
   "Reading your spaghetti...",
   "Judging your variable names...",
@@ -19,6 +19,21 @@ const LOADING_TAGLINES = [
   "Did you even test this?",
 ]
 
+const PROFANE_TAGLINES = [
+  "Reading your shitty commit history...",
+  "Judging your goddamn variable names...",
+  "Counting the fucks you gave about tests...",
+  "Scanning for the shit you copy-pasted...",
+  "Measuring the depth of your bullshit...",
+  "Dissecting this dumpster fire...",
+  "Auditing your half-assed 'temporary' hacks...",
+  "Finding every bastard of a bug...",
+  "Compiling your failures, you absolute menace...",
+  "Calculating how fucked this repo is...",
+  "Roasting this pile of shit...",
+  "Did you even fucking test this?",
+]
+
 const BOX_W = 200
 const BOX_H = 160
 const SKULL_SIZE = 36
@@ -28,7 +43,7 @@ const STIFFNESS = 0.28
 const DAMPING = 0.72
 const IMPULSE = 7
 
-export function RoastingLoadingState() {
+export function RoastingLoadingState({ profanity = true }: { profanity?: boolean }) {
   const skullWrapperRef = useRef<HTMLDivElement | null>(null)
   const boxRef = useRef<HTMLDivElement | null>(null)
 
@@ -43,18 +58,20 @@ export function RoastingLoadingState() {
 
   const rafRef = useRef<number | null>(null)
 
-  const [tagline, setTagline] = useState(
-    () => LOADING_TAGLINES[Math.floor(Math.random() * LOADING_TAGLINES.length)]
-  )
+  const [tagline, setTagline] = useState(() => {
+    const list = profanity ? PROFANE_TAGLINES : CLEAN_TAGLINES
+    return list[Math.floor(Math.random() * list.length)]
+  })
   const [fading, setFading] = useState(false)
 
   // Cycle taglines every 2.5 s
   useEffect(() => {
+    const list = profanity ? PROFANE_TAGLINES : CLEAN_TAGLINES
     const cycle = () => {
       setFading(true)
       setTimeout(() => {
         setTagline((prev) => {
-          const choices = LOADING_TAGLINES.filter((t) => t !== prev)
+          const choices = list.filter((t) => t !== prev)
           return choices[Math.floor(Math.random() * choices.length)]
         })
         setFading(false)
@@ -62,7 +79,7 @@ export function RoastingLoadingState() {
     }
     const interval = setInterval(cycle, 2500)
     return () => clearInterval(interval)
-  }, [])
+  }, [profanity])
 
   // DVD-style bounce + box spring shake
   useEffect(() => {

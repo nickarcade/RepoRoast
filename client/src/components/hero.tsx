@@ -71,7 +71,11 @@ export function HeroSection() {
   const handleRoastClick = async () => {
     const parsed = parseGitHubUrl(url)
     if (!parsed) {
-      toast.error("Please enter a valid GitHub repository URL.")
+      toast.error(
+        profanity
+          ? "That is not a fucking GitHub repository URL."
+          : "Please enter a valid GitHub repository URL."
+      )
       return
     }
 
@@ -121,7 +125,9 @@ export function HeroSection() {
           Roast My Repo
         </h1>
         <p className="mt-4 sm:mt-6 text-sm text-muted-foreground max-w-xl text-pretty">
-          {"Drop your repo URL. We'll find every bullshit thing you put on github."}
+          {profanity
+            ? "Drop your repo URL. We'll find every half-assed, copy-pasted piece of shit you put on GitHub."
+            : "Drop your repo URL. We'll find every questionable decision you put on GitHub."}
         </p>
 
         <div className="mt-8 sm:mt-10 flex w-full max-w-xl flex-col gap-3">
@@ -170,7 +176,7 @@ export function HeroSection() {
             className={`self-start flex items-center gap-3 border-2 border-ink px-3 py-1.5 cursor-pointer transition-colors duration-100 ${profanity ? "bg-ink text-primary-foreground" : "bg-cream text-ink"}`}
           >
             <span className="text-xs font-bold uppercase tracking-widest">
-              {profanity ? "Profanity On" : "Clean Mode"}
+              {profanity ? "Full Filth" : "Clean Mode"}
             </span>
             <span className={`relative w-8 h-4 border-2 border-current flex items-center transition-colors ${profanity ? "bg-yellow" : "bg-muted"}`}>
               <span className={`absolute w-2.5 h-2.5 bg-ink transition-all duration-150 ${profanity ? "left-3.5" : "left-px"}`} />

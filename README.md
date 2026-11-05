@@ -26,6 +26,10 @@ It is built to feel fast, merciless, and a little unhinged on purpose. The proje
 6. Those selected files are sent to a larger model that generates the final roast.
 7. The roast streams back to the UI as JSON and is cached for later.
 
+## Tone
+
+Every roast has two modes. The default, Full Filth, is deliberately obscene: at least one real swear per paragraph, no asterisks, no euphemisms, and a verdict with teeth. Clean Mode keeps the same 12-paragraph structure and the same brutality without a single curse word. Both modes ban slurs, sexual content, threats, and attacks on protected characteristics, because being vile about code is the point and being vile about people is not.
+
 ## Tech Stack
 
 ### Frontend

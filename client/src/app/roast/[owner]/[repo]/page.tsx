@@ -91,14 +91,18 @@ export default function RoastPage() {
   }
 
   if (loading) {
-    return <RoastingLoadingState />
+    return <RoastingLoadingState profanity={profanity} />
   }
 
   if (!result) {
     return (
       <section className="bg-cream min-h-[60vh] px-4 py-12 sm:px-6">
         <div className="max-w-xl mx-auto flex flex-col gap-6 items-center text-center">
-          <p className="text-sm text-muted-foreground">Something went wrong. Could not roast this repo.</p>
+          <p className="text-sm text-muted-foreground">
+            {profanity
+              ? "Well, fuck. That roast died on the operating table."
+              : "Something went wrong. Could not roast this repo."}
+          </p>
           <button
             onClick={handleBack}
             className="flex items-center gap-2 border-2 border-ink bg-cream text-ink px-3 py-1.5 text-xs font-bold uppercase tracking-widest hover:bg-ink hover:text-primary-foreground transition-colors duration-100 cursor-pointer"
