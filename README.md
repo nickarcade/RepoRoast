@@ -1,20 +1,8 @@
 # RepoRoast
 
-I built RepoRoast as a fun little weekend project that takes any public GitHub repository and returns a brutally honest roast. Posted it on Reddit and it blew up which was honestly wild:
-
-- Reddit Post 1: On r/github but it got removed \:(
-
-- [Reddit Post 2](https://www.reddit.com/r/webdev/comments/1rsyxpp/how_i_got_500_people_to_roast_their_github_repos/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
-
-- [Reddit Post 3](https://www.reddit.com/r/coolgithubprojects/comments/1s0scjl/how_i_got_1400_people_to_roast_their_github_repos/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+A fork RepoRoast to be more brutal and specific. CLI only for customization and use inside of a coding agent with or without an API key. as a fun little weekend project that takes any public GitHub repository and returns a brutally honest roast.
 
 It is built to feel fast, merciless, and a little unhinged on purpose. The project focuses on good UX flow, efficient LLM usage, caching, and a visual style with attention to detail that does not look like vibe coded slop.
-
-## Current Stats
-
-- 2.6k people have used it so far
-- 10,000+ website visits
-- 15M+ tokens burned so far
 
 ## How it works
 
