@@ -12,4 +12,5 @@ Thumbs.db
 *_roast*.md
 *.roast.json
 roasts/
+Roasts/
 roast-output/
