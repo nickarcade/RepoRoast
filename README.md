@@ -22,9 +22,10 @@ It is built to feel fast, merciless, and a little unhinged on purpose. The proje
 2. The client prefetches repo data in the background as soon as the URL looks valid.
 3. The app checks whether a roast already exists in cache.
 4. If not, it fetches repository metadata, README content, commit messages, and a filtered file tree.
-5. A smaller model picks the most important files.
-6. Those selected files are sent to a larger model that generates the final roast.
-7. The roast streams back to the UI as JSON and is cached for later.
+5. The coding agent reads that summary in the CLI and writes the roast, following the rules in `server/prompts.js`.
+6. The server stores cached roasts and exposes the count and recent list.
+
+Roast generation is CLI-only. The server no longer calls an LLM provider; the coding agent does the work, and the old `/roast` and `/pick-files` endpoints return `410 Gone` with that explanation.
 
 ## Tone
 
@@ -44,9 +45,7 @@ Every roast has two modes. The default, Full Filth, is deliberately obscene: at 
 ### Backend
 
 - Express
-- Mistral AI for LLM calls
 - Upstash Redis for caching
-- llm-json-validator for streaming JSON parsing
 
 ## Architecture
 
@@ -97,15 +96,7 @@ RepoRoast uses several layers of caching and prefetching:
 - Upstash Redis stores the roast cache, total roast count, and recent roasts.
 - The file tree pipeline filters noise before asking the smaller model for file selection.
 
-This combination is what makes the app feel fast even though it is doing multiple network calls and two LLM passes.
-
-## API Key Rotation
-
-I do not have enough money to pay for large LLM requests. So what did I do? 
-
-Mistral offeres a fairly generous free tier, so I created multiple accounts and made the server support multiple Mistral API keys through environment variables like `MISTRAL_API_KEY`, `MISTRAL_API_KEY_2`, and so on.
-
-It rotates through them so requests are spread across keys instead of relying on just one. That helps keep the demo usable when one key hits rate limits or token usage for the month.
+This combination is what makes the app feel fast even though it is doing multiple network calls.
 
 ## Things I Learned Or Found
 

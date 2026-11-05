@@ -2,69 +2,14 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 import cors from 'cors';
 import { Redis } from '@upstash/redis';
-import { createStreamingParser } from 'llm-json-validator';
-
-import { roastPrompt, pickFilesPrompt } from './prompts.js';
-import { NvidiaProvider } from './nvidia-provider.js';
 
 dotenv.config();
-
-const nvidiaKeys = Object.entries(process.env)
-  .filter(([key]) => key.match(/^NVIDIA_API_KEY(_\d+)?$/))
-  .map(([, value]) => value)
-  .filter(Boolean);
-
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL ?? "",
   token: process.env.UPSTASH_REDIS_REST_TOKEN ?? "",
 });
 
-const REPO_CHECK_TTL_MS = 5 * 60 * 1000;
-const repoExistenceCache = new Map();
-
-function isValidOwnerAndRepo(owner, repo) {
-  if (typeof owner !== 'string' || typeof repo !== 'string') return false;
-  const ownerTrimmed = owner.trim();
-  const repoTrimmed = repo.trim();
-  if (!ownerTrimmed || !repoTrimmed) return false;
-  if (ownerTrimmed.length > 39 || repoTrimmed.length > 100) return false;
-  return /^[A-Za-z0-9._-]+$/.test(ownerTrimmed) && /^[A-Za-z0-9._-]+$/.test(repoTrimmed);
-}
-
-async function checkPublicRepoExists(owner, repo) {
-  if (!isValidOwnerAndRepo(owner, repo)) return false;
-
-  const cacheKey = `${owner.toLowerCase()}/${repo.toLowerCase()}`;
-  const now = Date.now();
-  const cached = repoExistenceCache.get(cacheKey);
-  if (cached && cached.expiresAt > now) {
-    return cached.exists;
-  }
-
-  const url = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'manual',
-      headers: {
-        Accept: 'text/html',
-        'User-Agent': 'RepoRoast/1.0',
-      },
-    });
-
-    const exists = response.status === 200 || (response.status >= 300 && response.status < 400);
-    repoExistenceCache.set(cacheKey, { exists, expiresAt: now + REPO_CHECK_TTL_MS });
-    return exists;
-  } catch {
-    return false;
-  }
-}
-
-const llm = new NvidiaProvider({ keys: nvidiaKeys });
-const roastModel = process.env.LLM_ROAST_MODEL ?? 'google/gemma-4-31b-it';
-const pickFilesModel = process.env.LLM_PICK_FILES_MODEL ?? 'google/gemma-4-31b-it';
 
 const app = express();
 
@@ -122,143 +67,12 @@ function requireAllowedOrigin(req, res, next) {
   return res.status(403).json({ error: 'Forbidden origin' });
 }
 
-/**
- * Convert repo_summary JSON into a compact text format.
- * Eliminates JSON syntax overhead (quotes, brackets, commas)
- */
-function buildCompactPrompt(s) {
-  const lines = [];
-  lines.push(`REPO: ${s.owner}/${s.name}`);
-  if (s.description) lines.push(`DESCRIPTION: ${s.description}`);
-  if (s.languages?.length) lines.push(`LANGUAGES: ${s.languages.join(', ')}`);
-  lines.push(`Stars: ${s.stars} | Forks: ${s.forks} | Issues: ${s.open_issues} | Contributors: ${s.contributor_count}`);
-  lines.push(`Created: ${(s.created_at ?? '').slice(0, 10)} | Last push: ${(s.last_pushed_at ?? '').slice(0, 10)} | Current date (authoritative): ${(s.current_date ?? '').slice(0, 10)}`);
-  if (s.license_name) lines.push(`License: ${s.license_name}`);
-  if (s.fork) lines.push('Fork: yes');
-  if (s.is_archived) lines.push('Archived: yes');
-
-  if (s.readme) {
-    lines.push('', 'README:', s.readme);
-  }
-
-  if (s.recent_commit_messages?.length) {
-    lines.push('', 'RECENT COMMITS:');
-    for (const msg of s.recent_commit_messages) lines.push(`- ${msg}`);
-  }
-
-  if (s.file_tree?.length) {
-    lines.push('', 'FILE TREE:');
-    lines.push(s.file_tree.join('\n'));
-  }
-
-  if (s.file_contents?.length) {
-    lines.push('', 'FILE CONTENTS:');
-    for (const f of s.file_contents) {
-      lines.push(`--- ${f.path}${f.truncated ? ' (truncated)' : ''} ---`);
-      lines.push(f.content);
-    }
-  }
-
-  return lines.join('\n');
-}
-
-app.post('/roast', requireAllowedOrigin, async (req, res) => {
-  try {
-    const { repo_summary, profanity } = req.body;
-
-    if (!repo_summary || typeof repo_summary !== 'object' || profanity === undefined) {
-      return res.status(400).json({ error: 'Missing or invalid repo_summary or profanity flag' });
-    }
-
-    if (typeof repo_summary.name === 'string' && repo_summary.name.trim().toLowerCase() === 'reporoast') {
-      return res.status(400).json({ error: 'RepoRoast is too perfect to roast. Please choose another repo' });
-    }
-
-    if (typeof repo_summary.owner === 'string' && repo_summary.owner.trim().toLowerCase() === 'hkhan701') {
-      return res.status(400).json({ error: "Did you really think I'd let you roast my personal repos? Try someone else's code, coward" });
-    }
-
-    const repoUrl = `github.com/${repo_summary.owner}/${repo_summary.name}`;
-
-    // Check cache first and return normal JSON response
-    const cached = await getCachedRoast(repoUrl, profanity);
-    if (cached) {
-      return res.status(200).json({
-        roast: cached.roast,
-        verdict: cached.verdict,
-        cached: true,
-      });
-    }
-
-    const repoExists = await checkPublicRepoExists(repo_summary.owner, repo_summary.name);
-    if (!repoExists) {
-      return res.status(404).json({ error: 'Repository does not exist or is not public.' });
-    }
-
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
-
-    const sendEvent = (event, payload) => {
-      res.write(`event: ${event}\n`);
-      res.write(`data: ${JSON.stringify(payload)}\n\n`);
-    };
-
-    let latest = { roast: '', verdict: '' };
-
-    const parser = createStreamingParser({
-      returnParsedJson: false,
-      dummyValues: {
-        string: '',
-        number: 0,
-        boolean: false,
-        null: null,
-      },
-    });
-
-    for await (const textChunk of llm.stream({
-        model: roastModel,
-        messages: [
-          { role: 'system', content: roastPrompt(profanity) },
-          { role: 'user', content: buildCompactPrompt(repo_summary) },
-        ],
-        responseFormat: { type: 'json_object' },
-      })) {
-      const balanced = parser.appendChunk(textChunk);
-      if (typeof balanced !== 'string') continue;
-
-      const parsed = tryParseRoastJson(balanced, latest);
-      if (!parsed) continue;
-
-      latest = parsed;
-      sendEvent('chunk', latest);
-    }
-
-    const finalBalanced = parser.getCurrentData();
-    if (typeof finalBalanced === 'string') {
-      const finalParsed = tryParseRoastJson(finalBalanced, latest);
-      if (finalParsed) latest = finalParsed;
-    }
-
-    // Save to cache, push to recent list, increment counter (non-blocking)
-    if (latest.roast) {
-      setCachedRoast(repoUrl, profanity, latest.roast, latest.verdict);
-      pushRecentRoast(repoUrl, latest.verdict);
-      incrementRoastCount();
-    }
-
-    sendEvent('done', { ...latest, cached: false });
-    res.end();
-  } catch (error) {
-    console.error('Error roasting repo:', error);
-    if (!res.headersSent) {
-      return res.status(500).json({ error: 'Too many roasts being done!! Try again in a few seconds' });
-    }
-    res.write(`event: error\n`);
-    res.write(`data: ${JSON.stringify({ message: 'Too many roasts being done!! Try again in a few seconds' })}\n\n`);
-    res.end();
-  }
+// Roast generation now happens in the coding agent CLI. Keep the old
+// endpoints responding with a clear message instead of a bare 404.
+app.all(['/roast', '/pick-files'], (_, res) => {
+  res.status(410).json({
+    error: 'Roast generation moved to the coding agent CLI. This server only serves cached roasts and stats.',
+  });
 });
 
 app.get('/roast-check', requireAllowedOrigin, async (req, res) => {
@@ -276,30 +90,6 @@ app.get('/roast-check', requireAllowedOrigin, async (req, res) => {
     return res.status(200).json({ cached: false });
   } catch {
     return res.status(200).json({ cached: false });
-  }
-});
-
-app.post('/pick-files', requireAllowedOrigin, async (req, res) => {
-  try {
-    const { paths } = req.body;
-
-    if (!paths || !Array.isArray(paths) || paths.length === 0) {
-      return res.status(400).json({ error: 'Missing or invalid paths array' });
-    }
-
-    const chatResponse = await llm.complete({
-      model: pickFilesModel,
-      messages: [{ role: 'user', content: pickFilesPrompt(paths) }],
-      responseFormat: { type: 'json_object' },
-      temperature: 0,
-      maxTokens: 512,
-    });
-
-    const result = JSON.parse(chatResponse.choices[0].message.content.trim());
-    res.status(200).json(result);
-  } catch (error) {
-    console.error('Error picking files:', error);
-    res.status(500).json({ error: 'Too many roasts being done!! Try again in a few seconds' });
   }
 });
 
@@ -412,29 +202,4 @@ async function getRoastCount() {
   }
 }
 
-function tryParseRoastJson(raw, previous) {
-  if (typeof raw !== 'string' || !raw.trim()) return null;
 
-  const patched = raw.replace(
-    /("roast"\s*:\s*"[\s\S]*?")\s*("verdict"\s*:)/,
-    '$1, $2',
-  );
-
-  try {
-    const parsed = JSON.parse(patched);
-    if (!parsed || typeof parsed !== 'object') return null;
-
-    const next = {
-      roast: typeof parsed.roast === 'string' ? parsed.roast : previous.roast,
-      verdict: typeof parsed.verdict === 'string' ? parsed.verdict : previous.verdict,
-    };
-
-    if (next.roast === previous.roast && next.verdict === previous.verdict) {
-      return null;
-    }
-
-    return next;
-  } catch {
-    return null;
-  }
-}
