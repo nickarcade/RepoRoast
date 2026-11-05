@@ -1,0 +1,15 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Roast outputs & artifacts (do not commit to repository)
+*_ROAST*.md
+*_roast*.md
+*.roast.json
+roasts/
+roast-output/
