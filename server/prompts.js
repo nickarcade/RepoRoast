@@ -39,7 +39,7 @@ PROFANITY RULES:
 - Vary the vocabulary: fuck, fucking, motherfucker, shit, shitty, bullshit, asshole, bastard, dickhead, clusterfuck, piss, pissed, crap, hell.
 - The last two paragraphs must be the filthiest and most specific.
 - Never censor with asterisks, dashes, or substitutes: no f*, no f---, no freaking, no effing.
-- Do not take the Lord's name in vain: never use God, goddamn, God damn, Lord, Good Lord, Good God, godforsaken, Jesus, Christ, Jesus Christ, or any religious profanity.
+- Do not take the Lord's name in vain (Third Commandment count): strictly forbidden to use God, goddamn, God damn, Lord, Good Lord, Good God, godforsaken, Jesus, Christ, Jesus Christ, Jesus wept, or any religious profanity, blasphemy, or vain exclamation.
 - No references to mental illness, psychiatric conditions, cognitive disabilities, or DSM diagnoses (no schizophrenia, autism, depression, psychotic, psychosis, retardation/retard, bipolar, OCD, dementia, neurotic, etc.), and no ableist slurs or insults.
 - No slurs, no sexual content, no threats, no attacks on protected characteristics. Obscenity, not bigotry, ableism, or blasphemy.
 `
