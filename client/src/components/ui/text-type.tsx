@@ -51,7 +51,7 @@ const TextType = ({
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
   const cursorRef = useRef<HTMLSpanElement>(null);
-  const containerRef = useRef<HTMLElement>(null);
+  const [container, setContainer] = useState<HTMLElement | null>(null);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
 
@@ -67,7 +67,7 @@ const TextType = ({
   };
 
   useEffect(() => {
-    if (!startOnVisible || !containerRef.current) return;
+    if (!startOnVisible || !container) return;
 
     const observer = new IntersectionObserver(
       entries => {
@@ -80,9 +80,9 @@ const TextType = ({
       { threshold: 0.1 }
     );
 
-    observer.observe(containerRef.current);
+    observer.observe(container);
     return () => observer.disconnect();
-  }, [startOnVisible]);
+  }, [startOnVisible, container]);
 
   useEffect(() => {
     if (showCursor && cursorRef.current) {
@@ -164,6 +164,7 @@ const TextType = ({
     isVisible,
     reverseMode,
     variableSpeed,
+    getRandomSpeed,
     onSentenceComplete
   ]);
 
@@ -173,7 +174,7 @@ const TextType = ({
   return createElement(
     Component,
     {
-      ref: containerRef,
+      ref: setContainer,
       className: `inline-block whitespace-pre-wrap tracking-tight ${className}`,
       ...props
     },
